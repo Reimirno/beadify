@@ -41,8 +41,8 @@ class ColorMapChoice:
     def get_complete_map(self) -> dict[str, ColorEntryMatch]:
         return {orig_hex_str: self.get_mapped_color_for(orig_hex_str) for orig_hex_str in self.color_map}
 
-    def get_unique_mapped_colors(self) -> set[ColorEntryMatch]:
-        return {self.get_mapped_color_for(orig_hex_str) for orig_hex_str in self.color_map}
+    def get_unique_mapped_colors(self) -> set[ColorEntry]:
+        return {self.get_mapped_color_for(orig_hex_str).color for orig_hex_str in self.color_map}
 
 class SrcImgCanvas(tk.Canvas):
     def __init__(self, root, image_fixture: ImageFixture, **kwargs):
@@ -185,15 +185,17 @@ class ColorSummary(tk.Canvas):
         
         self.delete(*self.find_withtag("unique_*"))
         uniques = list(var_map_choice.get_unique_mapped_colors())
-        uniques.sort(key=lambda cem:cem.color.coco)
+        uniques.sort(key=lambda clr:clr.coco)
         x = 10 + 2 * (self.cell_size + self.interval) + self.interval * 2
-        for i, cem in enumerate(uniques):
+        for i, clr in enumerate(uniques):
             y0 = i * (self.cell_size + self.interval) + 10 
             x1 = x + self.cell_size 
             y1 = y0 + self.cell_size
-            self.create_rectangle(x, y0, x1, y1, fill='#' + cem.color.hex, outline='grey', tags=f"unique_color_{i}")
-            self.create_text(x + self.cell_size / 2, y0 + self.cell_size / 2, text=cem.color.coco,
-                             fill=get_contrasting_text_color_hex_str(cem.color.hex),
+            self.create_rectangle(x, y0, x1, y1, fill='#' + clr.hex, outline='grey' if clr.available else 'red',
+                                   tags=f"unique_color_{i}",
+                                    width=1 if clr.available else 3)
+            self.create_text(x + self.cell_size / 2, y0 + self.cell_size / 2, text=clr.coco,
+                             fill=get_contrasting_text_color_hex_str(clr.hex),
                               tags=f"unique_text_{i}")
         
 
