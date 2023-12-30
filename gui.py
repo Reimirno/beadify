@@ -3,10 +3,7 @@ from PIL import Image
 import color as clr
 import repo as repo
 from model import ColorEntry, ColorEntryMatch
-
-K = 5
-CELL_SIZE = 20
-AVAIALABLE_ONLY = True
+from main import config
 
 class ImageFixture:
     def __init__(self, width: int, height: int, pixels: list[list[str]], 
@@ -48,10 +45,10 @@ class SrcImgCanvas(tk.Canvas):
     def __init__(self, root, image_fixture: ImageFixture, **kwargs):
         self.image_fixture = image_fixture
         width, height = image_fixture.width, image_fixture.height
-        super().__init__(root, width=width*CELL_SIZE, height=height*CELL_SIZE, **kwargs)
+        super().__init__(root, width=width*config.CELL_SIZE, height=height*config.CELL_SIZE, **kwargs)
         for x in range(width):
             for y in range(height):
-                position = x * CELL_SIZE, y * CELL_SIZE, (x + 1) * CELL_SIZE, (y + 1) * CELL_SIZE
+                position = x * config.CELL_SIZE, y * config.CELL_SIZE, (x + 1) * config.CELL_SIZE, (y + 1) * config.CELL_SIZE
                 self.create_rectangle(position, fill=image_fixture.pixels[x][y], tags=f"rect_{x}_{y}")
     
     def update(self, var_outline):
@@ -65,12 +62,12 @@ class RltImgCanvas(tk.Canvas):
         self.image_fixture = image_fixture
         self.change_focus_lambda = lambda x, y: None
         width, height = image_fixture.width, image_fixture.height
-        super().__init__(root, width=width*CELL_SIZE, height=height*CELL_SIZE, **kwargs)
+        super().__init__(root, width=width*config.CELL_SIZE, height=height*config.CELL_SIZE, **kwargs)
         for x in range(width):
             for y in range(height):
-                position = x * CELL_SIZE, y * CELL_SIZE, (x + 1) * CELL_SIZE, (y + 1) * CELL_SIZE
+                position = x * config.CELL_SIZE, y * config.CELL_SIZE, (x + 1) * config.CELL_SIZE, (y + 1) * config.CELL_SIZE
                 cell = self.create_rectangle(position, tags=f"rect_{x}_{y}")
-                text = self.create_text((x + 0.5) * CELL_SIZE, (y + 0.5) * CELL_SIZE, text='', tags=f"text_{x}_{y}")
+                text = self.create_text((x + 0.5) * config.CELL_SIZE, (y + 0.5) * config.CELL_SIZE, text='', tags=f"text_{x}_{y}")
                 self.tag_bind(text, '<Button-1>', lambda event, x=x, y=y: self.change_focus_lambda(x, y))
                 self.tag_bind(cell, '<Button-1>', lambda event, x=x, y=y: self.change_focus_lambda(x, y))
     
@@ -95,7 +92,7 @@ class FocusPalette(tk.Canvas):
         medium_cell_size = 100
         spacing_big = 50
         spacing_medium = 5
-        canvas_width = max(2 * big_cell_size + spacing_big, K * medium_cell_size + (K - 1) * spacing_medium)
+        canvas_width = max(2 * big_cell_size + spacing_big, config.K * medium_cell_size + (config.K - 1) * spacing_medium)
         canvas_height = big_cell_size + medium_cell_size + spacing_medium
         super().__init__(root, width=canvas_width, height=canvas_height, **kwargs)
 
@@ -109,9 +106,9 @@ class FocusPalette(tk.Canvas):
         self.create_text(x + big_cell_size / 2, y + big_cell_size / 2, text='', tags='current_text')
 
         y = big_cell_size + spacing_medium
-        for i in range(K):
+        for i in range(config.K):
             x = i * (medium_cell_size + spacing_medium)
-            x += (canvas_width - K * medium_cell_size - (K - 1) * spacing_medium) / 2
+            x += (canvas_width - config.K * medium_cell_size - (config.K - 1) * spacing_medium) / 2
             cell = self.create_rectangle(x, y, x + medium_cell_size, y + medium_cell_size, tags=f'option_color_{i}')
             text = self.create_text(x + medium_cell_size / 2, y + medium_cell_size / 2, text='', tags=f'option_text_{i}')
             self.tag_bind(text, '<Button-1>', lambda event, i=i: self.change_map_choice_lambda(i))
@@ -133,7 +130,7 @@ class FocusPalette(tk.Canvas):
         self.itemconfig('current_text', text="CURRENT-" + chosen_mapped_color.color.coco,
                         fill=get_contrasting_text_color_hex_str(chosen_mapped_color.color.hex))
 
-        for i in range(K):
+        for i in range(config.K):
             cur_option_color = all_mapped_colors[i]
             self.itemconfig(f'option_color_{i}', fill='#' + cur_option_color.color.hex)
             self.itemconfig(f'option_text_{i}', text=cur_option_color.color.coco,
@@ -215,7 +212,8 @@ def load_src_img(repository: list[ColorEntry], src_img_path) -> ImageFixture:
         src_pxls.append(row_pxls)
     for hex_str in uniq_src_pxls:
         lab_color = clr.hex_to_lab(hex_str)
-        closest_colors = clr.find_closest_colors(repository, lab_color, k=K, available_only=AVAIALABLE_ONLY)
+        closest_colors = clr.find_closest_colors(repository, lab_color, 
+                                                 k=config.K, available_only=config.AVAIALABLE_ONLY)
         uniq_src_pxls[hex_str] = closest_colors
     image_fixture = ImageFixture(width, height, src_pxls, uniq_src_pxls)
     return image_fixture
@@ -317,6 +315,3 @@ def main():
     right_pane.pack(side='right', fill='y')
 
     root.mainloop()
-
-if __name__ == "__main__":
-    main()

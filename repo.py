@@ -1,5 +1,4 @@
 import csv
-from colormath.color_objects import sRGBColor, LabColor
 from color import hex_to_lab, hex_to_rgb, hex_to_srgb
 from model import ColorEntry
 

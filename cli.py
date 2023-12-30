@@ -3,6 +3,7 @@ import matplotlib.patches as patches
 import repo as repo
 import color as clr
 from model import ColorEntryMatch
+from main import config
 
 def display_color_swatches(target_hex_str: str, closest_colors: list[ColorEntryMatch]):
     fig, ax = plt.subplots()
@@ -42,7 +43,8 @@ def main():
             continue
         
         target_hex = clr.hex_to_lab(target_hex_str)
-        closest_colors = clr.find_closest_colors(repository, target_hex)
+        closest_colors = clr.find_closest_colors(repository, target_hex,
+                                                  k=config.K, available_only=config.AVAILABLE_ONLY) 
 
         print()
         print(" === BEST MATCH FOR COLOR " + target_hex_str.upper() + " === ")
@@ -51,7 +53,3 @@ def main():
         print()
 
         display_color_swatches(target_hex_str, closest_colors)
-            
-
-if __name__ == "__main__":
-    main()
