@@ -10,6 +10,9 @@ class ColorEntry:
         self.rgb_tuple = rgb_tuple
         self.srgb_color = srgb_color
         self.lab_color = lab_color
+    
+    def __repr__(self):
+        return f"ColorEntry({self.hex}, {self.coco}, {self.mard}, {self.available}, {self.rgb_tuple}, {self.srgb_color}, {self.lab_color})"
 
 class ColorEntryMatch:
     def __init__(self, color: ColorEntry, distance: float):

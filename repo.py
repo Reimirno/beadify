@@ -12,6 +12,6 @@ def prepare_repository(csv_file_path) -> list[ColorEntry]:
     return repository
 
 def _row_to_colorentry(row) -> ColorEntry:
-    hex_str, coco, mard, available = row['hex'].lstrip('#'), row['coco'], row['mard'], row['available'].lower() != 'true'
+    hex_str, coco, mard, available = row['hex'].lstrip('#'), row['coco'], row['mard'], row['available'].lower() == 'true'
     rgb_tuple, srgb_color, lab_color = hex_to_rgb(hex_str), hex_to_srgb(hex_str), hex_to_lab(hex_str)
     return ColorEntry(hex_str, coco, mard, available, rgb_tuple, srgb_color, lab_color)

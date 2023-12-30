@@ -41,6 +41,9 @@ class ColorMapChoice:
     def get_complete_map(self) -> dict[str, ColorEntryMatch]:
         return {orig_hex_str: self.get_mapped_color_for(orig_hex_str) for orig_hex_str in self.color_map}
 
+    def get_unique_mapped_colors(self) -> set[ColorEntryMatch]:
+        return {self.get_mapped_color_for(orig_hex_str) for orig_hex_str in self.color_map}
+
 class SrcImgCanvas(tk.Canvas):
     def __init__(self, root, image_fixture: ImageFixture, **kwargs):
         self.image_fixture = image_fixture
@@ -144,6 +147,56 @@ class ButtonGroup(tk.Frame):
         button = tk.Button(self, text=text, command=command)
         button.pack(side='left')
 
+class ColorSummary(tk.Canvas):
+    def __init__(self, root, image_fixture: ImageFixture, **kwargs):
+        self.image_fixture = image_fixture
+        super().__init__(root, width=150, height=600, **kwargs)
+
+        self.scrollbar = tk.Scrollbar(root, orient="vertical", command=self.yview)
+        self.scrollbar.pack(side="right", fill="y")
+        self.configure(yscrollcommand=self.scrollbar.set) # let scrollbar control the canvas
+
+        self.cell_size = 40
+        self.interval = 5
+
+        x = 10
+        for i, orig_hex in enumerate(image_fixture.color_map):
+            y0 = i * (self.cell_size + self.interval) + 10 
+            x1 = x + self.cell_size 
+            y1 = y0 + self.cell_size
+            self.create_rectangle(x, y0, x1, y1, fill=orig_hex, outline='grey')
+        
+        x += self.cell_size + self.interval
+        for i, orig_hex in enumerate(image_fixture.color_map):
+            y0 = i * (self.cell_size + self.interval) + 10 
+            x1 = x + self.cell_size 
+            y1 = y0 + self.cell_size
+            self.create_rectangle(x, y0, x1, y1, fill='#000000', outline='grey', tags=f"mappped_color_{i}")
+            self.create_text(x + self.cell_size / 2, y0 + self.cell_size / 2, text='', tags=f"mappped_text_{i}")
+        
+        self.config(scrollregion=self.bbox("all")) # let canvas know the scrollable region
+    
+    def update(self, var_map_choice: ColorMapChoice):
+        for i, orig_hex in enumerate(self.image_fixture.color_map):
+            chosen_mapped_color = var_map_choice.get_mapped_color_for(orig_hex)
+            self.itemconfig(f"mappped_color_{i}", fill='#' + chosen_mapped_color.color.hex)
+            self.itemconfig(f"mappped_text_{i}", text=chosen_mapped_color.color.coco,
+                            fill=get_contrasting_text_color_hex_str(chosen_mapped_color.color.hex))
+        
+        self.delete(*self.find_withtag("unique_*"))
+        uniques = list(var_map_choice.get_unique_mapped_colors())
+        uniques.sort(key=lambda cem:cem.color.coco)
+        x = 10 + 2 * (self.cell_size + self.interval) + self.interval * 2
+        for i, cem in enumerate(uniques):
+            y0 = i * (self.cell_size + self.interval) + 10 
+            x1 = x + self.cell_size 
+            y1 = y0 + self.cell_size
+            self.create_rectangle(x, y0, x1, y1, fill='#' + cem.color.hex, outline='grey', tags=f"unique_color_{i}")
+            self.create_text(x + self.cell_size / 2, y0 + self.cell_size / 2, text=cem.color.coco,
+                             fill=get_contrasting_text_color_hex_str(cem.color.hex),
+                              tags=f"unique_text_{i}")
+        
+
 def load_src_img(repository: list[ColorEntry], src_img_path) -> ImageFixture:
     image = Image.open(src_img_path)
     pixels = image.load()
@@ -197,15 +250,18 @@ def main():
     var_fx, var_fy = 0, 0
     var_label, var_outline = True, True
 
-    src_canvas = SrcImgCanvas(root, image_fixture=image_fixture)
+    left_pane = tk.Frame(root)
+    right_pane = tk.Frame(root)
+
+    src_canvas = SrcImgCanvas(left_pane, image_fixture=image_fixture)
     src_canvas.update(var_outline)
     src_canvas.grid(row=0, column=0)
 
-    rlt_canvas = RltImgCanvas(root, image_fixture=image_fixture)
+    rlt_canvas = RltImgCanvas(left_pane, image_fixture=image_fixture)
     rlt_canvas.update(var_map_choice, var_label, var_outline)
     rlt_canvas.grid(row=0, column=1)
 
-    focus_palette = FocusPalette(root, image_fixture=image_fixture)
+    focus_palette = FocusPalette(left_pane, image_fixture=image_fixture)
     focus_palette.update(var_map_choice, var_fx, var_fy)
     focus_palette.grid(row=1, column=0, columnspan=2)
 
@@ -219,6 +275,7 @@ def main():
         nonlocal var_map_choice, var_fx, var_fy, var_label, var_outline
         orig_hex_str = image_fixture.pixels[var_fx][var_fy]
         var_map_choice.set_mapped_color_for(orig_hex_str, new_val)
+        color_summary.update(var_map_choice)
         rlt_canvas.update(var_map_choice, var_label, var_outline)
         focus_palette.update(var_map_choice, var_fx, var_fy)
     focus_palette.assign_event(change_map_choice_lambda)
@@ -226,6 +283,7 @@ def main():
     def reset_all_map_choice():
         nonlocal var_map_choice, var_fx, var_fy, var_label, var_outline
         var_map_choice.reset_all_map_choice()
+        color_summary.update(var_map_choice)
         rlt_canvas.update(var_map_choice, var_label, var_outline)
         focus_palette.update(var_map_choice, var_fx, var_fy)
     
@@ -241,13 +299,20 @@ def main():
         src_canvas.update(var_outline)
         rlt_canvas.update(var_map_choice, var_label, var_outline)
 
-    btn_group = ButtonGroup(root)
+    btn_group = ButtonGroup(left_pane)
     btn_group.add_button("Label", change_label_lambda)
     btn_group.add_button("Outline", change_outline_lambda)
     btn_group.add_button("Reset", reset_all_map_choice)
     btn_group.add_button("Save", lambda: export_canvas(rlt_canvas))
     btn_group.add_button("Exit", root.destroy)
     btn_group.grid(row=3, column=0, columnspan=2)
+
+    color_summary = ColorSummary(right_pane, image_fixture=image_fixture)
+    color_summary.update(var_map_choice)
+    color_summary.pack(side="left", fill="both", expand=True)
+
+    left_pane.pack(side='left')
+    right_pane.pack(side='right', fill='y')
 
     root.mainloop()
 
