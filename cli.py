@@ -2,8 +2,9 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import repo as repo
 import color as clr
+from model import ColorEntryMatch
 
-def display_color_swatches(target_hex_str, closest_colors):
+def display_color_swatches(target_hex_str: str, closest_colors: list[ColorEntryMatch]):
     fig, ax = plt.subplots()
     swatch_width = 1  # Width of each color swatch
     interval = 0.1    # Interval between swatches
@@ -14,12 +15,10 @@ def display_color_swatches(target_hex_str, closest_colors):
                 fontsize=9, ha='center', va='center')
 
     # Display closest colors
-    for i, entry in enumerate(closest_colors):
-        distance, lab_color, row = entry
-        hex_color, coco, mard =   row['hex'], row['coco'], row['mard']
+    for i, cem in enumerate(closest_colors):
         position = i * (swatch_width + interval)
-        ax.add_patch(patches.Rectangle((position, 0), swatch_width, 1, color=f"#{hex_color}"))
-        ax.annotate(f"{hex_color} {coco}", (position + swatch_width / 2, -0.05), color='black', weight='bold', 
+        ax.add_patch(patches.Rectangle((position, 0), swatch_width, 1, color=f"#{cem.color.hex}"))
+        ax.annotate(f"{cem.color.hex} {cem.color.coco}", (position + swatch_width / 2, -0.05), color='black', weight='bold', 
                     fontsize=8, ha='center', va='center')
 
     total_width = len(closest_colors) * (swatch_width + interval)
@@ -47,8 +46,8 @@ def main():
 
         print()
         print(" === BEST MATCH FOR COLOR " + target_hex_str.upper() + " === ")
-        for distance, lab_color, row in closest_colors:
-            print(f"{row['hex']} {row['coco']} ({row['mard']}) - Distance: {distance}")
+        for cem in closest_colors:
+            print(f"{cem.color.hex} {cem.color.coco}  - Distance: {cem.distance}")
         print()
 
         display_color_swatches(target_hex_str, closest_colors)

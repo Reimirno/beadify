@@ -1,6 +1,7 @@
 from colormath.color_objects import sRGBColor, LabColor
 from colormath.color_conversions import convert_color
 from colormath.color_diff import delta_e_cie1976
+from model import ColorEntry, ColorEntryMatch
 
 # Patch numpy to allow asscalar() on numpy.float64
 import numpy
@@ -34,12 +35,13 @@ def calculate_luminance(hex_str: str) -> float:
 def color_distance(lab_color1: LabColor, lab_color2: LabColor) -> float:
     return delta_e_cie1976(lab_color1, lab_color2)
 
-def find_closest_colors(repository, target_lab_color, k=5, available_only=False) -> list[tuple[float, LabColor, dict]]:
-    distances = []
-    for repo_lab_color, row in repository:
-        if available_only and row['available'].lower() != 'true':
+def find_closest_colors(repository: list[ColorEntry], target_lab_color: LabColor, 
+                        k=5, available_only=False) -> list[ColorEntryMatch]:
+    rlt = []
+    for colorentry in repository:
+        if available_only and not colorentry.available:
             continue
-        dist = color_distance(repo_lab_color, target_lab_color)
-        distances.append((dist, repo_lab_color, row))
-    distances.sort(key=lambda x: x[0])
-    return distances[:k]
+        dist = color_distance(colorentry.lab_color, target_lab_color)
+        rlt.append(ColorEntryMatch(colorentry, dist))
+    rlt.sort(key=lambda cem:cem.distance)
+    return rlt[:k]
