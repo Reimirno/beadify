@@ -36,10 +36,12 @@ def color_distance(lab_color1: LabColor, lab_color2: LabColor) -> float:
     return delta_e_cie1976(lab_color1, lab_color2)
 
 def find_closest_colors(repository: list[ColorEntry], target_lab_color: LabColor, 
-                        k=5, available_only=False) -> list[ColorEntryMatch]:
+                        k=5, available_only=False, solid_only=True) -> list[ColorEntryMatch]:
     rlt = []
     for colorentry in repository:
         if available_only and not colorentry.available:
+            continue
+        if solid_only and not colorentry.solid:
             continue
         dist = color_distance(colorentry.lab_color, target_lab_color)
         rlt.append(ColorEntryMatch(colorentry, dist))

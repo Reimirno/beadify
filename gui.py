@@ -213,7 +213,7 @@ def load_src_img(repository: list[ColorEntry], src_img_path) -> ImageFixture:
     for hex_str in uniq_src_pxls:
         lab_color = clr.hex_to_lab(hex_str)
         closest_colors = clr.find_closest_colors(repository, lab_color, 
-                                                 k=config.K, available_only=config.AVAIALABLE_ONLY)
+                                                 k=config.K, available_only=config.AVAILABLE_ONLY, solid_only=config.SOLID_ONLY)
         uniq_src_pxls[hex_str] = closest_colors
     image_fixture = ImageFixture(width, height, src_pxls, uniq_src_pxls)
     return image_fixture

@@ -1,8 +1,9 @@
 config = {
-    'GUI': True,
+    'GUI': False,
     'K': 5,
     'CELL_SIZE': 20,
-    'AVAIALABLE_ONLY': True,
+    'SOLID_ONLY': True,
+    'AVAILABLE_ONLY': True,
 }
 
 class Config:

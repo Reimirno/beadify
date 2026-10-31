@@ -44,12 +44,12 @@ def main():
         
         target_hex = clr.hex_to_lab(target_hex_str)
         closest_colors = clr.find_closest_colors(repository, target_hex,
-                                                  k=config.K, available_only=config.AVAILABLE_ONLY) 
+                                                  k=config.K, available_only=config.AVAILABLE_ONLY, solid_only=config.SOLID_ONLY)
 
         print()
         print(" === BEST MATCH FOR COLOR " + target_hex_str.upper() + " === ")
         for cem in closest_colors:
-            print(f"{cem.color.hex} {cem.color.coco}  - Distance: {cem.distance}")
+            print(f"{cem.color.hex} {cem.color.coco}  - Distance: {cem.distance}" + (" (unavailable)" if not cem.color.available else ""))
         print()
 
         display_color_swatches(target_hex_str, closest_colors)
